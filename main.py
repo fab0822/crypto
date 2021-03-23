@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import requests
 import json
+import talib
 
 
 conf = configparser.ConfigParser()
@@ -51,7 +52,7 @@ class BitBankPrbAPI:
             print(e)
             return None
 
-#coingeckoのAPIから5分単位で価格を取得してデータフレームにする
+#coingeckoのAPIから1時間単位で価格を取得してデータフレームにする
 def get_price(ticker, term):
     url = ('https://api.coingecko.com/api/v3/coins/') + ticker + ('/market_chart?vs_currency=jpy&days=') + term
     r = requests.get(url)
@@ -75,22 +76,20 @@ def main():
 
     while True:
         #コインの価格データ取得
-        coin_data = get_price('qtum', '1')
-        price = pd.Series(coin_data['prices'])
-        #pandasで移動平均線を計算
-        SMA5 = price.rolling(window=5).mean()
-        SMA20 = price.rolling(window=20).mean()
-        #コイン価格と2つの移動平均線の最新数値を取得
-        reala5 = SMA5[len(SMA5)-2]
-        realb5 = SMA5[len(SMA5)-1]
-        reala20 = SMA20[len(SMA20)-2]
-        realb20 = SMA20[len(SMA20)-1]
+        coin_data = get_price('qtum', '2')
+        #price = pd.Series(coin_data['prices'])
+        price = np.array(coin_data['prices'])
+        #各インディゲーターの計算
+        short_EMA = talib.EMA(price,timeperiod=8)
+        long_EMA = talib.EMA(price,timeperiod=18)
+        #RSI = talib.RSI(df_np,timeperiod=14)
+        #upper, middle, lower = talib.BBANDS(df_np, timeperiod=25, nbdevup=2, nbdevdn=2, matype=0)
 
         if flag==True: 
-            if reala5 < reala20 and realb5 > realb20: 
+            if long_EMA[-2] > short_EMA[-2] and long_EMA[-1] < short_EMA[-1]: 
                 prv_set.order(
                     PAIR,
-                    str(price),
+                    #str(price),
                     str(AMOUNT),
                     'buy',
                     'market'
@@ -102,17 +101,17 @@ def main():
                 d = datetime.today()
                 print(d.strftime("%Y-%m-%d %H:%M:%S"), 'no trade')
         elif flag==False: 
-            time.sleep(600)
-            prv_set.order(
-                PAIR,
-                str(price),
-                str(AMOUNT),
-                'sell',
-                'market'
-            ) 
-            flag= True 
-            d = datetime.today() 
-            print(d.strftime("%Y-%m-%d %H:%M:%S"), 'sell coin')
+            if long_EMA[-2] < short_EMA[-2] and long_EMA[-1] > short_EMA[-1]:
+                prv_set.order(
+                    PAIR,
+                    #str(price),
+                    str(AMOUNT),
+                    'sell',
+                    'market'
+                ) 
+                flag= True 
+                d = datetime.today() 
+                print(d.strftime("%Y-%m-%d %H:%M:%S"), 'sell coin')
         time.sleep(300)
 
 if __name__ == '__main__':
