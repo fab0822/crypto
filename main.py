@@ -76,7 +76,7 @@ def main():
 
     while True:
         #コインの価格データ取得
-        coin_data = get_price('qtum', '2')
+        coin_data = get_price('qtum', '1')
         #price = pd.Series(coin_data['prices'])
         price = np.array(coin_data['prices'])
         #各インディゲーターの計算
@@ -89,7 +89,7 @@ def main():
             if long_EMA[-2] > short_EMA[-2] and long_EMA[-1] < short_EMA[-1]: 
                 prv_set.order(
                     PAIR,
-                    #str(price),
+                    str(price), #使われない
                     str(AMOUNT),
                     'buy',
                     'market'
@@ -104,7 +104,7 @@ def main():
             if long_EMA[-2] < short_EMA[-2] and long_EMA[-1] > short_EMA[-1]:
                 prv_set.order(
                     PAIR,
-                    #str(price),
+                    str(price), #使われない
                     str(AMOUNT),
                     'sell',
                     'market'
