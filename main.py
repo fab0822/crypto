@@ -16,9 +16,9 @@ conf.read('config.ini')
 API_KEY = conf['bitbank']['api_key']
 API_SECRET = conf['bitbank']['api_secret']
 PAIR = 'qtum_jpy'
-AMOUNT = 0.01
+AMOUNT = 10
 samples = 30
-interval_sec = 300
+interval_sec = 900
 
 class BitBankPubAPI:
 
@@ -70,7 +70,7 @@ def get_price(how_many_samples):
     return price_list
 
 def plot_profits(profit_list):
-    today = datetime.today().strftime("%Y-%m-%d")
+    today = datetime.today().strftime("%Y-%m-%d %H")
     fig = plt.figure()
     plt.plot(profit_list)
     plt.title('Total Profit')
@@ -86,7 +86,7 @@ def main():
     coin_data['prices'] = get_price(samples)
     flag = True
     buy_price = sell_price = profit = timecount = 0
-    profit_list = []
+    profit_list = [0]
     while True:
         price_now = pub_set.get_ticker(PAIR)
         coin_data = coin_data.append({'prices': price_now['last']}, ignore_index=True)
